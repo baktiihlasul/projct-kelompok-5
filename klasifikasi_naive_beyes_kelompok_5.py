@@ -8,11 +8,10 @@ from sklearn.metrics import confusion_matrix, classification_report, accuracy_sc
 
 st.title("Klasifikasi Naive Bayes - Proporsi Korban Kejahatan")
 
-# Baca langsung dari file lokal (tanpa upload)
-csv_path = 'Proporsi_Korban_Kejahatan_Indonesia_2021.csv'
+uploaded_file = st.file_uploader("Unggah file CSV", type="csv")
 
-try:
-    dataset = pd.read_csv(csv_path)
+if uploaded_file is not None:
+    dataset = pd.read_csv(uploaded_file)
     st.subheader("Pratinjau Dataset")
     st.write(dataset.head())
 
@@ -62,5 +61,11 @@ try:
         st.subheader("Perbandingan y_test vs y_pred")
         st.dataframe(ydata)
 
-except FileNotFoundError:
-    st.error(f"File '{csv_path}' tidak ditemukan. Pastikan file berada di direktori yang sama dengan file .py ini.")
+        # Download file hasil prediksi
+        hasil_excel = ydata.to_excel(index=False, engine='openpyxl')
+        st.download_button(
+            label="Unduh Hasil Prediksi (Excel)",
+            data=hasil_excel,
+            file_name='dataactualpred.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
