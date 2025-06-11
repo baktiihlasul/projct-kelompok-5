@@ -8,6 +8,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 
+pip install seaborn matplotlib
+
 st.set_option('deprecation.showPyplotGlobalUse', False)
 st.title("Klasifikasi Naive Bayes - Dataset Kejahatan")
 
