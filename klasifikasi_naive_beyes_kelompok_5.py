@@ -1,71 +1,72 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 
-st.title("Klasifikasi Naive Bayes - Proporsi Korban Kejahatan")
+st.title("Klasifikasi Naive Bayes - Dataset Kejahatan")
 
-uploaded_file = st.file_uploader("Unggah file CSV", type="csv")
+# Upload file dari user
+uploaded_file = st.file_uploader("Unggah file CSV Anda", type="csv")
 
 if uploaded_file is not None:
-    dataset = pd.read_csv(uploaded_file)
-    st.subheader("Pratinjau Dataset")
-    st.write(dataset.head())
+    try:
+        df = pd.read_csv(uploaded_file)
+        st.subheader("Pratinjau Dataset")
+        st.write(df.head())
 
-    if st.checkbox("Tampilkan informasi dataset"):
-        buffer = []
-        dataset.info(buf=buffer)
-        s = '\n'.join(buffer)
-        st.text(s)
+        if st.checkbox("Tampilkan info dataset"):
+            buffer = []
+            df.info(buf=buffer)
+            st.text('\n'.join(buffer))
 
-    if not dataset.empty:
-        # Label encoding pada kolom target
-        le = LabelEncoder()
-        dataset['Proporsi_Korban_Kejahatan_Persen'] = le.fit_transform(dataset['Proporsi_Korban_Kejahatan_Persen'])
+        # Pilih kolom numerik sebagai fitur dan target
+        numeric_cols = df.select_dtypes(include='number').columns.tolist()
 
-        # Pemilihan fitur dan target
-        x = dataset.iloc[:, -1:].values
-        y = dataset.iloc[:, 1].values
+        if len(numeric_cols) < 2:
+            st.warning("Dataset harus memiliki minimal dua kolom numerik.")
+        else:
+            fitur = st.selectbox("Pilih kolom sebagai fitur (X)", numeric_cols)
+            target = st.selectbox("Pilih kolom sebagai target (y)", [col for col in numeric_cols if col != fitur])
 
-        # Split data
-        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=0)
+            X = df[[fitur]].values
+            y = df[target].values
 
-        # Standarisasi
-        sc = StandardScaler()
-        x_train = sc.fit_transform(x_train)
-        x_test = sc.transform(x_test)
+            # Diskretisasi target jika berupa nilai kontinu
+            y = pd.cut(y, bins=4, labels=[0, 1, 2, 3])
 
-        # Klasifikasi Naive Bayes
-        classifier = GaussianNB()
-        classifier.fit(x_train, y_train)
-        y_pred = classifier.predict(x_test)
+            # Split data
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Evaluasi
-        st.subheader("Hasil Evaluasi")
-        cm = confusion_matrix(y_test, y_pred)
-        st.text("Confusion Matrix:")
-        st.write(cm)
+            # Standarisasi fitur
+            scaler = StandardScaler()
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
 
-        report = classification_report(y_test, y_pred, output_dict=True)
-        st.text("Classification Report:")
-        st.dataframe(pd.DataFrame(report).transpose())
+            # Model Naive Bayes
+            model = GaussianNB()
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
 
-        akurasi = accuracy_score(y_test, y_pred)
-        st.success(f"Tingkat akurasi: {akurasi * 100:.2f}%")
+            # Evaluasi model
+            st.subheader("Hasil Evaluasi Model")
+            st.write("Confusion Matrix:")
+            st.write(confusion_matrix(y_test, y_pred))
 
-        # Tampilkan data aktual vs prediksi
-        ydata = pd.DataFrame({'y_test': y_test, 'y_pred': y_pred})
-        st.subheader("Perbandingan y_test vs y_pred")
-        st.dataframe(ydata)
+            st.write("Classification Report:")
+            report = classification_report(y_test, y_pred, output_dict=True)
+            st.dataframe(pd.DataFrame(report).transpose())
 
-        # Download file hasil prediksi
-        hasil_excel = ydata.to_excel(index=False, engine='openpyxl')
-        st.download_button(
-            label="Unduh Hasil Prediksi (Excel)",
-            data=hasil_excel,
-            file_name='dataactualpred.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
+            acc = accuracy_score(y_test, y_pred)
+            st.success(f"Akurasi Model: {acc * 100:.2f}%")
+
+            # Hasil prediksi
+            st.subheader("Perbandingan Hasil Prediksi")
+            result = pd.DataFrame({'y_test': y_test, 'y_pred': y_pred})
+            st.dataframe(result)
+
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat membaca atau memproses file: {e}")
+else:
+    st.info("Silakan unggah file CSV untuk memulai.")
