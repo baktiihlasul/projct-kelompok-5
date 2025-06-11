@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 
-# Konfigurasi tampilan Streamlit
+# Konfigurasi Streamlit
 st.set_page_config(page_title="Klasifikasi Naive Bayes", layout="wide")
 st.title("📊 Klasifikasi Naive Bayes - Dataset Kejahatan")
 
@@ -39,13 +39,14 @@ if uploaded_file is not None:
                 target_options = [col for col in numeric_cols if col != fitur]
                 target = st.selectbox("🎯 Pilih kolom sebagai target (y)", target_options)
 
-            # Siapkan data
+            # Bersihkan NaN dari kolom fitur dan target
             clean_df = df[[fitur, target]].dropna()
-if len(clean_df) < len(df):
-    st.warning(f"{len(df) - len(clean_df)} baris dihapus karena memiliki nilai kosong (NaN).")
+            if len(clean_df) < len(df):
+                st.warning(f"{len(df) - len(clean_df)} baris dihapus karena mengandung nilai kosong (NaN).")
 
-X = clean_df[[fitur]].values
-y_raw = clean_df[target].values
+            # Siapkan data
+            X = clean_df[[fitur]].values
+            y_raw = clean_df[target].values
 
             # Diskretisasi target jika kontinu
             y = pd.cut(y_raw, bins=4, labels=[0, 1, 2, 3])
