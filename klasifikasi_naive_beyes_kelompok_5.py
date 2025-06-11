@@ -40,8 +40,12 @@ if uploaded_file is not None:
                 target = st.selectbox("🎯 Pilih kolom sebagai target (y)", target_options)
 
             # Siapkan data
-            X = df[[fitur]].values
-            y_raw = df[target].values
+            clean_df = df[[fitur, target]].dropna()
+if len(clean_df) < len(df):
+    st.warning(f"{len(df) - len(clean_df)} baris dihapus karena memiliki nilai kosong (NaN).")
+
+X = clean_df[[fitur]].values
+y_raw = clean_df[target].values
 
             # Diskretisasi target jika kontinu
             y = pd.cut(y_raw, bins=4, labels=[0, 1, 2, 3])
